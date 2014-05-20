@@ -95,9 +95,11 @@ module.exports = exports  = (schema, options)->
       ids = results.map getIdFromResult
       scope = if options.getScope then options.getScope.apply(results[0]) else null
 
-      debuglog "[findWithTags] ids:#{ids}, scope:#{scope}, taggable:#{taggable}"
+      debuglog "[findWithTags] ids:#{ids}, scope:#{scope}"
 
       taggable.get ids, scope, (err, tagsArray)->
+
+        #debuglog "[findWithTags] tagsArray:#{tagsArray}"
 
         return callback?(err) if err?
         for object, i in results

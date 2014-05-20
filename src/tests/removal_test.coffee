@@ -26,7 +26,7 @@ schema = undefined
 Record = null
 
 ## Test cases
-describe "test basic", ->
+describe "test removal", ->
 
   # initalize models
   before (done) ->
