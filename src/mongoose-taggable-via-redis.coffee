@@ -38,6 +38,8 @@ module.exports = exports  = (schema, options)->
   )
   .get( ()-> return this._tags)
 
+  schema.set('toJSON', { virtuals: true})
+  schema.set('toObject', { virtuals: true})
 
   ## instance methods
 
