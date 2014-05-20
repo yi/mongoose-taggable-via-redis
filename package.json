@@ -1,6 +1,6 @@
 {
   "name": "mongoose-taggable-via-redis",
-  "description": "a mongoose plugin provide taggin function to datamodle via r",
+  "description": "a mongoose plugin provide taggin function to datamodle via redis",
   "version": "0.1.0",
   "homepage": "https://github.com/yi/mongoose-taggable-via-redis",
   "author": {
@@ -26,15 +26,18 @@
   },
   "scripts": {
     "watch": "coffee -o ./lib/ -cw ./src/",
-    "test": "mocha tests"
+    "test": "DEBUG=* ./node_modules/.bin/mocha --reporter spec  --ignore-leaks tests"
   },
   "dependencies": {
-    "taggable-via-redis": "latest"
+    "taggable-via-redis": "latest",
+    "redis": "0.10.1",
+    "debug": "0.7.4"
   },
   "devDependencies": {
     "chai": "1.2.0",
     "mocha": "1.3.2",
     "mongoose": "3.8.9",
+    "async" : "latest",
     "should": "1.1.0"
   },
   "keywords": ["mongoose", "mongodb", "model", "trash", "delete"]

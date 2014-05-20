@@ -6,18 +6,28 @@
 should = require "should"
 mongoose = require 'mongoose'
 taggable = require "../mongoose-taggable-via-redis"
+redis = require("redis")
+async = require "async"
 
+REDIS_CLIENT = redis.createClient()
 MODEL_NAME = "Record"
 
+TAGS_NODE = "javascript,server,programming".split(",").sort()
+TAGS_JQUERY = "javascript,client,programming".split(",").sort()
+TAGS_RAILS = "ruby,programming".split(",").sort()
+TAGS_COFFEESCRIPT = "javascript,client,server,programming".split(",").sort()
+TAGS_NODE2 = "javascript,server,programming,async,joyent".split(",").sort()
+
 # global reference
-db = undefined
 schema = undefined
+Record = null
 
 ## Test cases
 describe "test basic", ->
 
   # initalize models
   before (done) ->
+    console.log "[basic_test::before 1]"
 
     mongoose.connect "mongodb://localhost/test"
     mongoose.connection.once "connected", (err)->
@@ -26,35 +36,40 @@ describe "test basic", ->
       schema = new mongoose.Schema({},
         versionKey: false
       )
+
       schema.add
         _id: String
         name: String
         createdAt: Date
 
+      console.dir taggable
+
       schema.plugin taggable,
-        limit: 5
+        taggable : "book"
+        redisClient : REDIS_CLIENT
 
       mongoose.model MODEL_NAME, schema
+
       done()
 
 
   # clean prev test data
   before (done) ->
-    mongoose.model(MODEL_NAME).remove done
+    console.log "[basic_test::before 2]"
+    Record = mongoose.model(MODEL_NAME)
+    Record.remove done
     return
-
 
   # initialize test data
   before (done) ->
+    console.log "[basic_test::before 3]"
     arr = []
-    i = 100
-
-    while i >= 1
+    for i in [0...100]
       arr.push i
-      i--
+
     async.each arr, ((i, cb) ->
       obj =
-        _id: (Date.now() + i).toString(36)
+        _id: "#{(Date.now()).toString(36)}#{i}"
         name: "paginate_" + i
         createdAt: new Date().setDate(new Date().getDate() - i)
 
@@ -63,9 +78,19 @@ describe "test basic", ->
     ), done
     return
 
+  describe "mongoose-taggable-via-redis", ->
 
-    describe "basic", ->
+    it "should able to set tags", (done)->
+      mongoose.model(MODEL_NAME).findOne (err, item)->
+        should.not.exist err
+        item.setTags TAGS_NODE, (err)->
+          should.not.exist err
+          done()
+          return
+        return
+      return
 
-      it "should", () ->
+    return
+
 
 
