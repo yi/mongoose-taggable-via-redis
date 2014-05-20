@@ -11,7 +11,8 @@ Taggable = require "taggable-via-redis"
 assert = require "assert"
 debuglog = require("debug")("mongoose-taggable")
 mongoose = require 'mongoose'
-mongoose.set('debug', true)
+
+#mongoose.set('debug', true)
 getIdFromResult = (result) -> result._id || result.id
 
 findCallbackFromArguments = (args)->
@@ -38,7 +39,9 @@ module.exports = exports  = (schema, options)->
   .get( ()-> return this._tags)
 
 
-  # instance methods
+  ## instance methods
+
+  # set tags to an instance
   schema.methods.setTags = (tags, callback)->
     debuglog "[setTags] id:#{@id}, tags:#{tags}"
 
@@ -46,11 +49,20 @@ module.exports = exports  = (schema, options)->
     taggable.set @id, tags, scope, callback
     return
 
+  ## static methds
+  schema.post 'remove', (record)->
+    debuglog "[on remove] record:#{record}"
+    # remove tags belong to this record
+    record.setTags null
+    return
+
+  # get popular tags of specified amount
   schema.statics['popularTags'] = (count, scope, callback)->
-    debuglog "[popularTags] count:#{count}, scope:#{scope}"
+    debuglog "[popularTags] count:#{count}"
     taggable.popular count, scope, callback
     return
 
+  # find records of given tags
   schema.statics['findByTags'] = (tags, query, scope, callback) ->
     debuglog "[findByTags] tags:#{tags}, scope:#{scope}"
     if 'function' is typeof scope
@@ -68,6 +80,7 @@ module.exports = exports  = (schema, options)->
       return
     return
 
+  # find, and return results with tags
   schema.statics['findWithTags'] = (conditions, callback) ->
     debuglog "[findWithTags]"
     if "function" is typeof conditions
@@ -94,7 +107,12 @@ module.exports = exports  = (schema, options)->
         return
     return
 
+  ## pre/post hooks
 
+
+  ## query extension
+
+  # exec, and return results with tags
   mongoose.Query::execWithTag = (callback) ->
     debuglog "[execWithTag ]"
     @exec (err, results) =>
