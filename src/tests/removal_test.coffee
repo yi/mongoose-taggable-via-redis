@@ -10,7 +10,7 @@ redis = require("redis")
 async = require "async"
 
 REDIS_CLIENT = redis.createClient()
-MODEL_NAME = "Record"
+MODEL_NAME = "RemovalTest"
 
 TAGS_NODE = "javascript,server,programming".split(",").sort()
 TAGS_JQUERY = "javascript,client,programming".split(",").sort()
@@ -27,6 +27,10 @@ Record = null
 
 ## Test cases
 describe "test removal", ->
+
+  after (done)->
+    mongoose.connection.close()
+    done()
 
   # initalize models
   before (done) ->

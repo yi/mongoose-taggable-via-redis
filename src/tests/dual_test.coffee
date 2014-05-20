@@ -24,6 +24,10 @@ ModelFood = null
 ## Test cases
 describe "test dual", ->
 
+  after (done)->
+    mongoose.connection.close()
+    done()
+
   # initalize models
   before (done) ->
     console.log "[dual_test::before 1]"

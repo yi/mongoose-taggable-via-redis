@@ -28,6 +28,10 @@ Record = null
 ## Test cases
 describe "test basic", ->
 
+  after (done)->
+    mongoose.connection.close()
+    done()
+
   # initalize models
   before (done) ->
     console.log "[basic_test::before 1]"
