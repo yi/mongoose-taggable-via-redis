@@ -73,7 +73,7 @@ describe "test basic", ->
         name: "paginate_" + i
         createdAt: new Date().setDate(new Date().getDate() - i)
 
-      mongoose.model(MODEL_NAME)(obj).save cb
+      Record(obj).save cb
       return
     ), done
     return
@@ -81,11 +81,18 @@ describe "test basic", ->
   describe "mongoose-taggable-via-redis", ->
 
     it "should able to set tags", (done)->
-      mongoose.model(MODEL_NAME).findOne (err, item)->
+      Record.findOne (err, item)->
         should.not.exist err
         item.setTags TAGS_NODE, (err)->
           should.not.exist err
-          done()
+          Record.findWithTags {_id:item.id}, (err, results)->
+            console.dir results
+            should.not.exist err
+            results.length.should.eql 1
+            tags = results[0].tags
+            console.log "[basic_test] tags:#{tags}"
+            tags.sort().should.containDeep(TAGS_NODE)
+            done()
           return
         return
       return

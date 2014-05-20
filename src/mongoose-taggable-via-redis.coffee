@@ -12,75 +12,14 @@ assert = require "assert"
 debuglog = require("debug")("mongoose-taggable")
 mongoose = require 'mongoose'
 
-dateJSON = (key) ->
-  json = {}
-  json[key] = Date
-  json
+getIdFromResult = (result) -> result._id || result.id
 
-
-### what's in schema
-{ paths:
-   { _id:
-      { enumValues: [],
-        regExp: null,
-        path: '_id',
-        instance: 'String',
-        validators: [],
-        setters: [],
-        getters: [],
-        options: [Object],
-        _index: null },
-     name:
-      { enumValues: [],
-        regExp: null,
-        path: 'name',
-        instance: 'String',
-        validators: [],
-        setters: [],
-        getters: [],
-        options: [Object],
-        _index: null },
-     createdAt:
-      { path: 'createdAt',
-        instance: undefined,
-        validators: [],
-        setters: [],
-        getters: [],
-        options: [Object],
-        _index: null } },
-  subpaths: {},
-  virtuals: { id: { path: 'id', getters: [Object], setters: [], options: {} } },
-  nested: {},
-  inherits: {},
-  callQueue: [],
-  _indexes: [],
-  methods: {},
-  statics: {},
-  tree:
-   { _id: [Function: String],
-     id: { path: 'id', getters: [Object], setters: [], options: {} },
-     name: [Function: String],
-     createdAt: [Function: Date] },
-  _requiredpaths: undefined,
-  discriminatorMapping: undefined,
-  _indexedpaths: undefined,
-  options:
-   { versionKey: false,
-     id: true,
-     noVirtualId: false,
-     _id: true,
-     noId: false,
-     read: null,
-     shardKey: null,
-     autoIndex: true,
-     minimize: true,
-     discriminatorKey: '__t',
-     capped: false,
-     bufferCommands: true,
-     strict: true } }
-
-###
-
+findCallbackFromArguments = (args)->
+  theCallback = null
+  for i in [0...args.length]
+    if "function" is typeof args[i]
+      return i
+  return -1
 
 # mongoose-times plugin method
 module.exports = exports  = (schema, options)->
@@ -88,56 +27,82 @@ module.exports = exports  = (schema, options)->
 
   taggable = new Taggable(options)
 
+  schema
+  .virtual('tags')
+  .set( (val)->
+    @_tags = val
+  )
+  .get( ()-> return this._tags)
+
+
   # instance methods
   schema.methods.setTags = (tags, callback)->
-    debuglog "[setTags] tags:#{tags}"
+    debuglog "[setTags] id:#{@id}, tags:#{tags}"
 
     scope = options.getScope?(@)
-    if scope?
-      taggable.set scope, @id, tags, callback
-    else
-      taggable.set @id, tags, callback
+    taggable.set @id, tags, scope, callback
     return
 
-  schema.statics['popularTags'] = (scope, count, callback)->
-    debuglog "[popularTags] scope:#{scope}, count:#{count}"
-    if scope?
-      taggable.popular scope, count, callback
-    else
-      taggable.popular count, callback
+  schema.statics['popularTags'] = taggable.popular
+
+  schema.statics['findByTags'] = (tags, scope, callback) ->
+    if 'function' is typeof scope
+      callback = scope
+      scope = null
+    taggable.find tags, scope, (err, ids)->
+      return callback err if err?
+      @find _id : $in : ids, callback
+      return
+
+  schema.statics['findWithTags'] = (conditions, callback) ->
+    debuglog "[findWithTags]"
+    if "function" is typeof conditions
+      callback = conditions
+      conditions = {}
+
+    @find conditions, (err, results)->
+      return callback?(err) if err?
+      # lazy
+      return callback?(null, results) unless Array.isArray(results) and results.length > 0
+
+      ids = results.map getIdFromResult
+      scope = options.getScope?(results[0])
+
+      debuglog "[findWithTags] ids:#{ids}, scope:#{scope}, taggable:#{taggable}"
+
+      taggable.get ids, scope, (err, tagsArray)->
+        debuglog "[findWithTags] err:#{err}, tagsArray !!!!!:#{tagsArray}"
+
+        return callback?(err) if err?
+        for object, i in results
+          debuglog "[method] before"
+          console.dir object
+          object.tags = tagsArray[i]
+          debuglog "[method] after"
+          console.dir object
+          debuglog "[method] after, tags:#{object.tags}"
+
+        callback?(null, results)
+        return
     return
 
-  schema.statics['findByTags'] = (scope, tags, callback) ->
-    debuglog "[findByTags] scope:#{scope}, tags:#{tags}"
-    if scope?
-      taggable.find scope, tags, callback
-    else
-      taggable.find tags, callback
-    return
 
   mongoose.Query::execWithTag = (callback) ->
-    @exec (err, objects) =>
+    @exec (err, results) =>
       return callback?(err) if err?
-      return callback?(null, []) unless objects
+      return callback?(null, results) unless Array.isArray(results) and results.length > 0
 
-      ids = []
-      for object in objects
-        ids.push object._id
+      ids = results.map getIdFromResult
+      scope = options.getScope?(results[0])
 
-      handleTags = (err, tags)->
+      taggable.get ids, scope, (err, tags)->
         return callback?(err) if err?
-        for object, i in objects
+        for object, i in results
           object.tags = tags[i]
 
-        callback null, objects
+        callback null, results
         return
 
-
-      scope = options.getScope?(objects[0])
-      if scope
-        taggable.get scope, ids, handleTags
-      else
-        taggable.get ids, handleTags
       return
     return
 

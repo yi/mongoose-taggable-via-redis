@@ -26,7 +26,7 @@
   },
   "scripts": {
     "watch": "coffee -o ./lib/ -cw ./src/",
-    "test": "DEBUG=* ./node_modules/.bin/mocha --reporter spec  --ignore-leaks tests"
+    "test": "DEBUG=* ./node_modules/.bin/mocha --reporter spec tests"
   },
   "dependencies": {
     "taggable-via-redis": "latest",
@@ -34,11 +34,11 @@
     "debug": "0.7.4"
   },
   "devDependencies": {
-    "chai": "1.2.0",
-    "mocha": "1.3.2",
+    "chai": "latest",
+    "mocha": "latest",
     "mongoose": "3.8.9",
     "async" : "latest",
-    "should": "1.1.0"
+    "should": "latest"
   },
   "keywords": ["mongoose", "mongodb", "model", "trash", "delete"]
 }
