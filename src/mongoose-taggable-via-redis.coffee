@@ -11,7 +11,7 @@ Taggable = require "taggable-via-redis"
 assert = require "assert"
 debuglog = require("debug")("mongoose-taggable")
 mongoose = require 'mongoose'
-
+mongoose.set('debug', true)
 getIdFromResult = (result) -> result._id || result.id
 
 findCallbackFromArguments = (args)->
@@ -27,6 +27,9 @@ module.exports = exports  = (schema, options)->
 
   taggable = new Taggable(options)
 
+  if options.getScope?
+    assert 'function' is typeof options.getScope, "options.getScope is not a function"
+
   schema
   .virtual('tags')
   .set( (val)->
@@ -39,20 +42,31 @@ module.exports = exports  = (schema, options)->
   schema.methods.setTags = (tags, callback)->
     debuglog "[setTags] id:#{@id}, tags:#{tags}"
 
-    scope = options.getScope?(@)
+    scope = if options.getScope then options.getScope.apply(@) else null
     taggable.set @id, tags, scope, callback
     return
 
-  schema.statics['popularTags'] = taggable.popular
+  schema.statics['popularTags'] = (count, scope, callback)->
+    debuglog "[popularTags] count:#{count}, scope:#{scope}"
+    taggable.popular count, scope, callback
+    return
 
-  schema.statics['findByTags'] = (tags, scope, callback) ->
+  schema.statics['findByTags'] = (tags, query, scope, callback) ->
+    debuglog "[findByTags] tags:#{tags}, scope:#{scope}"
     if 'function' is typeof scope
       callback = scope
       scope = null
-    taggable.find tags, scope, (err, ids)->
+    else if 'function' is typeof query
+      callback = query
+      scope = null
+      query = null
+
+    taggable.find tags, scope, (err, ids)=>
       return callback err if err?
-      @find _id : $in : ids, callback
+      query = (query || @).where _id : $in : ids
+      query.execWithTag callback
       return
+    return
 
   schema.statics['findWithTags'] = (conditions, callback) ->
     debuglog "[findWithTags]"
@@ -66,21 +80,15 @@ module.exports = exports  = (schema, options)->
       return callback?(null, results) unless Array.isArray(results) and results.length > 0
 
       ids = results.map getIdFromResult
-      scope = options.getScope?(results[0])
+      scope = if options.getScope then options.getScope.apply(results[0]) else null
 
       debuglog "[findWithTags] ids:#{ids}, scope:#{scope}, taggable:#{taggable}"
 
       taggable.get ids, scope, (err, tagsArray)->
-        debuglog "[findWithTags] err:#{err}, tagsArray !!!!!:#{tagsArray}"
 
         return callback?(err) if err?
         for object, i in results
-          debuglog "[method] before"
-          console.dir object
           object.tags = tagsArray[i]
-          debuglog "[method] after"
-          console.dir object
-          debuglog "[method] after, tags:#{object.tags}"
 
         callback?(null, results)
         return
@@ -88,12 +96,13 @@ module.exports = exports  = (schema, options)->
 
 
   mongoose.Query::execWithTag = (callback) ->
+    debuglog "[execWithTag ]"
     @exec (err, results) =>
       return callback?(err) if err?
       return callback?(null, results) unless Array.isArray(results) and results.length > 0
 
       ids = results.map getIdFromResult
-      scope = options.getScope?(results[0])
+      scope = if options.getScope then options.getScope.apply(results[0]) else null
 
       taggable.get ids, scope, (err, tags)->
         return callback?(err) if err?

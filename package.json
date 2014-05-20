@@ -1,6 +1,6 @@
 {
   "name": "mongoose-taggable-via-redis",
-  "description": "a mongoose plugin provide taggin function to datamodle via redis",
+  "description": "a mongoose plugin provide fast and flexible tagging ablity to datamodle via redis, supports scope tagging",
   "version": "0.1.0",
   "homepage": "https://github.com/yi/mongoose-taggable-via-redis",
   "author": {
@@ -40,5 +40,5 @@
     "async" : "latest",
     "should": "latest"
   },
-  "keywords": ["mongoose", "mongodb", "model", "trash", "delete"]
+  "keywords": ["mongoose", "tagging", "tag", "taggable", "tag-cloud"]
 }
