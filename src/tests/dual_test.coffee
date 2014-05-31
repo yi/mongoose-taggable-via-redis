@@ -45,7 +45,7 @@ describe "test dual", ->
         owner : String
 
       schemaBook.plugin taggable,
-        taggable : "book"
+        taggable : "books"
         redisClient : REDIS_CLIENT
         getScope : -> "owner/#{@owner}" # wich scope
 
@@ -60,7 +60,7 @@ describe "test dual", ->
         parent : String
 
       schemaFood.plugin taggable,
-        taggable : "food"
+        taggable : "foods"
         redisClient : REDIS_CLIENT
         getScope : -> "PARENT:#{@parent}" # wich
 
@@ -163,11 +163,6 @@ describe "test dual", ->
         tags.sort().should.not.containDeep TAGS_BOOK
         tags.sort().should.containDeep TAGS_FOOD
         done()
-
-
-
-
-
 
 
 

@@ -49,7 +49,7 @@ describe "test removal", ->
         owner : String
 
       schema.plugin taggable,
-        taggable : "book"
+        taggable : "books"
         redisClient : REDIS_CLIENT
         getScope : -> "owner/#{@owner}" # wich scope
 

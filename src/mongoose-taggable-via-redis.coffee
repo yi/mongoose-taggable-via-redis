@@ -7,10 +7,11 @@
 ##
 
 # default plugin options values
-Taggable = require "taggable-via-redis"
+taggable = require "taggable-via-redis"
 assert = require "assert"
 debuglog = require("debug")("mongoose-taggable")
 mongoose = require 'mongoose'
+util = require "util"
 
 #mongoose.set('debug', true)
 getIdFromResult = (result) -> result._id || result.id
@@ -24,12 +25,15 @@ findCallbackFromArguments = (args)->
 
 # mongoose-times plugin method
 module.exports = exports  = (schema, options)->
-  debuglog "[init] schema:#{schema}"
 
-  taggable = new Taggable(options)
+  assert schema, "missing argument: schema"
+  assert options, "missing argument: options"
+  assert options.taggable, "missing argument: options.taggable"
 
-  if options.getScope?
-    assert 'function' is typeof options.getScope, "options.getScope is not a function"
+  taggable.init(options.redisClient)
+
+
+  schema["__taggable"] = options
 
   schema
   .virtual('tags')
@@ -38,6 +42,7 @@ module.exports = exports  = (schema, options)->
   )
   .get( ()-> return this._tags)
 
+  # include virtuals in json dump
   schema.set('toJSON', { virtuals: true})
   schema.set('toObject', { virtuals: true})
 
@@ -45,23 +50,20 @@ module.exports = exports  = (schema, options)->
 
   # set tags to an instance
   schema.methods.setTags = (tags, callback)->
-    debuglog "[setTags] id:#{@id}, tags:#{tags}"
+    #options = schema.__taggable
+    debuglog "[setTags] moduleName:#{options.taggable}, id:#{@id}, tags:#{tags}"
+    #debuglog "[setTags] schema:#{util.inspect(schema, {showHidden:true, colors:true})}"
 
     scope = if options.getScope then options.getScope.apply(@) else null
-    taggable.set @id, tags, scope, callback
+    taggable.set options.taggable, @id, tags, scope, callback
     return
 
   ## static methds
-  schema.post 'remove', (record)->
-    debuglog "[on remove] record:#{record}"
-    # remove tags belong to this record
-    record.setTags null
-    return
 
   # get popular tags of specified amount
   schema.statics['popularTags'] = (count, scope, callback)->
     debuglog "[popularTags] count:#{count}"
-    taggable.popular count, scope, callback
+    taggable.popular options.taggable, count, scope, callback
     return
 
   # find records of given tags
@@ -75,7 +77,7 @@ module.exports = exports  = (schema, options)->
       scope = null
       query = null
 
-    taggable.find tags, scope, (err, ids)=>
+    taggable.find options.taggable, tags, scope, (err, ids)=>
       return callback err if err?
       query = (query || @).where _id : $in : ids
       query.execWithTag callback
@@ -99,7 +101,7 @@ module.exports = exports  = (schema, options)->
 
       debuglog "[findWithTags] ids:#{ids}, scope:#{scope}"
 
-      taggable.get ids, scope, (err, tagsArray)->
+      taggable.get options.taggable, ids, scope, (err, tagsArray)->
 
         #debuglog "[findWithTags] tagsArray:#{tagsArray}"
 
@@ -112,21 +114,27 @@ module.exports = exports  = (schema, options)->
     return
 
   ## pre/post hooks
-
+  schema.post 'remove', (record)->
+    debuglog "[on remove] record:#{record}"
+    # remove tags belong to this record
+    record.setTags options.taggable, null
+    return
 
   ## query extension
 
   # exec, and return results with tags
   mongoose.Query::execWithTag = (callback) ->
-    debuglog "[execWithTag ]"
+    # getting back the hacked-attached options
+    taggableOptions = @.model.schema.__taggable
+    #debuglog "[execWithTag ] what is this: #{util.inspect(taggableOptions)}"
     @exec (err, results) =>
       return callback?(err) if err?
       return callback?(null, results) unless Array.isArray(results) and results.length > 0
 
       ids = results.map getIdFromResult
-      scope = if options.getScope then options.getScope.apply(results[0]) else null
+      scope = if taggableOptions.getScope then taggableOptions.getScope.apply(results[0]) else null
 
-      taggable.get ids, scope, (err, tags)->
+      taggable.get taggableOptions.taggable, ids, scope, (err, tags)->
         return callback?(err) if err?
         for object, i in results
           object.tags = tags[i]

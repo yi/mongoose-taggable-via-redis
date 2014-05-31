@@ -51,7 +51,7 @@ describe "test basic", ->
         owner : String
 
       schema.plugin taggable,
-        taggable : "book"
+        taggable : "records"
         redisClient : REDIS_CLIENT
         getScope : -> "owner/#{@owner}" # wich scope
 
