@@ -127,7 +127,7 @@ describe "test basic", ->
       Record.popularTags 10, (err, tags)->
         console.dir tags
         should.not.exist err
-        tags.length.should.above TAGS_NODE.length
+        tags.length.should.above(TAGS_NODE.length - 1)
         done()
 
     it "findByTags", (done)->

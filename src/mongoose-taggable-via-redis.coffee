@@ -117,7 +117,7 @@ module.exports = exports  = (schema, options)->
   schema.post 'remove', (record)->
     debuglog "[on remove] record:#{record}"
     # remove tags belong to this record
-    record.setTags options.taggable, null
+    record.setTags null
     return
 
   ## query extension
