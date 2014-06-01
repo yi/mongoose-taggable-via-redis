@@ -30,8 +30,8 @@ module.exports = exports  = (schema, options)->
   assert options, "missing argument: options"
   assert options.taggable, "missing argument: options.taggable"
 
-  taggable.init(options.redisClient)
-
+  # reset redis client if required
+  taggable.init(options.redisClient) if options.redisClient
 
   schema["__taggable"] = options
 

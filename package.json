@@ -1,7 +1,7 @@
 {
   "name": "mongoose-taggable-via-redis",
   "description": "a mongoose plugin provide fast and flexible tagging ablity to datamodle via redis, supports scope tagging",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "homepage": "https://github.com/yi/mongoose-taggable-via-redis",
   "author": {
     "name": "yi",
