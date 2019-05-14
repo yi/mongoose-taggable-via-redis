@@ -1,12 +1,12 @@
 # mongoose-taggable-via-redis [![Build Status](https://secure.travis-ci.org/yi/mongoose-taggable-via-redis.png?branch=master)](http://travis-ci.org/yi/mongoose-taggable-via-redis)
 
-a mongoose plugin provide tagging ability to datamodle via redis,
+a mongoose plugin that provides tagging ability to the mongoose data model via redis,
 
-Tagging in redis is super fast and flexable. This plugin use [taggable-via-redis](https://www.npmjs.org/package/taggable-via-redis) to provide a better tagging function to mongoose datamodle
+Tagging in redis is super fast and flexable. This plugin uses [taggable-via-redis](https://www.npmjs.org/package/taggable-via-redis) to provide a better tagging functionality to the mongoose data model
 
 This plugin also supports scope tagging
 
-**This plugin add folloowing methos to mongoose data model:**
+**This plugin adds the following methods to the mongoose data model:**
 
 ### Static Methods
  * DataModel.popularTags(count:Number, scope:String(optional), callback:Function)
@@ -14,13 +14,13 @@ This plugin also supports scope tagging
  * DataModel.findWithTags(conditions:MCondition, callback:Function)
 
 ### Query Extension
-  * execWithTag -- will call exec() and inject tags to each found data model instances
+  * execWithTag -- will call exec() and inject tags into each found data model instance
 
 ### Instance Methods
  * instance.setTags(tags:Array, callback:Function)
 
 ### Instance Properties
- * instance.tags -- return an array of all tags belong to the data model instance
+ * instance.tags -- returns an array of all tags belonging to the data model instance
 
 ### Init Options
 
@@ -29,7 +29,7 @@ This plugin also supports scope tagging
  * redisClient  -- [optional] use existing redis client, when override redisPort and redisHost options
  * redisPort -- [optional] custom redis port
  * redisHost -- [optional] custom redis host
- * getScope -- [optional] a function figure out scope from data model instance
+ * getScope -- [optional] a function that figures out scope from the data model instance
 
 ## Install
 Install the module with:
